@@ -1,0 +1,2 @@
+{ "name": "meridian-billing-demo", "version": "1.0.0", "private": true, "type": "module", "main": "server.js",
+  "dependencies": { "cookie-parser": "^1.4.7", "express": "^4.21.2" } }
