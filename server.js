@@ -45,11 +45,286 @@ function mrr() {
   return subs.filter(s => s.status === "active" || (BUGS.has("staleMrr") && s.status === "canceled")).reduce((n, s) => n + s.price, 0);
 }
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const STYLE = `body{font:15px/1.5 system-ui,sans-serif;margin:0;background:#f6f7fb;color:#1c2430}header{background:#3b2f63;color:#fff;padding:12px 20px;display:flex;gap:18px;align-items:center}header a{color:#d7cff0;text-decoration:none;font-weight:500}header a.on{color:#fff;text-decoration:underline}main{max-width:920px;margin:22px auto;padding:0 16px}.card{background:#fff;border:1px solid #e2e0ec;border-radius:8px;padding:18px;margin-bottom:18px}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #eeecf4}th{font-size:12px;text-transform:uppercase;color:#6a6284}label{display:block;margin:10px 0 4px;font-size:13px;color:#4a4460}input,select{padding:8px 10px;border:1px solid #cdc9dd;border-radius:6px;min-width:230px;font-size:14px}button,.btn{background:#3b2f63;color:#fff;border:0;border-radius:6px;padding:9px 16px;font-size:14px;cursor:pointer;text-decoration:none;display:inline-block}.btn.ghost{background:#fff;color:#3b2f63;border:1px solid #cdc9dd}.pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:12px;background:#ece9f4}.pill.active{background:#e4f6ea;color:#1c6b39}.pill.trial{background:#fff4e0;color:#8a5a12}.pill.canceled{background:#fdecea;color:#8a1c10}.tot{font-size:22px;font-weight:600}.muted{color:#6b7a89;font-size:13px}.err{background:#fdecea;border:1px solid #f5b3ab;color:#8a1c10;padding:9px 12px;border-radius:6px;margin-bottom:12px}`;
-const layout = (active, title, body) => `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} · Meridian Billing</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>${STYLE}</style></head><body><header><strong>Meridian Billing</strong>${[["/", "Dashboard"], ["/subscriptions", "Subscriptions"], ["/subscriptions?status=active", "Active"], ["/subscriptions/new", "New subscription"]].map(([h, l]) => `<a href="${h}" class="${active === h ? "on" : ""}">${l}</a>`).join("")}<span style="margin-left:auto"><a href="/logout">Sign out</a></span></header><main><h1>${esc(title)}</h1>${body}</main></body></html>`;
+
+const STYLE = `@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap');
+:root {
+  --primary: #115e59;
+  --primary-hover: #134e4a;
+  --primary-light: #ccfbf1;
+  --primary-text: #115e59;
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --success: #0d9488;
+  --success-light: #ccfbf1;
+  --success-text: #115e59;
+  --warning-light: #fef3c7;
+  --warning-text: #92400e;
+  --danger: #e11d48;
+  --danger-light: #ffe4e6;
+  --danger-text: #9f1239;
+}
+body {
+  font-family: 'Sora', system-ui, sans-serif;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+header {
+  background: linear-gradient(135deg, #115e59 0%, #134e4a 100%);
+  color: #fff;
+  padding: 14px 20px;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+}
+header strong {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  background: linear-gradient(to right, #2dd4bf, #99f6e4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+header a {
+  color: #99f6e4;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.925rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+}
+header a:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.1);
+}
+header a.on {
+  color: #fff;
+  background: rgba(255,255,255,0.15);
+  font-weight: 600;
+}
+main {
+  max-width: 920px;
+  width: 100%;
+  margin: 22px auto;
+  padding: 0 16px;
+  box-sizing: border-box;
+  flex-grow: 1;
+}
+h1 {
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #115e59;
+}
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05),0 2px 4px -2px rgba(0,0,0,0.05);
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th, td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+td {
+  font-size: 14px;
+}
+tr:last-child td {
+  border-bottom: none;
+}
+label {
+  display: block;
+  margin: 12px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+input, select {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  min-width: 230px;
+  font-size: 14px;
+  transition: all 0.2s;
+  background-color: #f1f5f9;
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: #115e59;
+  box-shadow: 0 0 0 3px #ccfbf1;
+  background-color: #fff;
+}
+button, .btn {
+  background: #115e59;
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.2s;
+  text-align: center;
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+}
+button:hover, .btn:hover {
+  background: #134e4a;
+  transform: translateY(-1px);
+}
+button:active, .btn:active {
+  transform: translateY(0);
+}
+.btn.ghost {
+  background: #fff;
+  color: #115e59;
+  border: 1px solid var(--border);
+}
+.btn.ghost:hover {
+  background: #ccfbf1;
+  border-color: #115e59;
+}
+.pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #475569;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+a.pill:hover {
+  background: #ccfbf1;
+  color: #115e59;
+}
+.pill.active {
+  background: var(--success-light);
+  color: var(--success-text);
+}
+.pill.trial {
+  background: var(--warning-light);
+  color: var(--warning-text);
+}
+.pill.canceled {
+  background: var(--danger-light);
+  color: var(--danger-text);
+}
+.low {
+  background: var(--danger-light);
+  color: var(--danger-text);
+}
+.err {
+  background: var(--danger-light);
+  border: 1px solid #ffe2e2;
+  color: var(--danger-text);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.muted {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.tot {
+  font-size: 24px;
+  font-weight: 700;
+  color: #115e59;
+}
+footer {
+  margin-top: auto;
+  text-align: center;
+  padding: 24px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+  background: #fff;
+}`;
+
+const layout = (active, title, body) => `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${esc(title)} · Meridian Billing</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>${STYLE}</style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col font-sans">
+  <div id="vue-app">
+    <div class="flex flex-col min-h-screen">
+      <header class="bg-gradient-to-r from-[#115e59] to-[#134e4a] text-white p-4 flex items-center gap-6 shadow-lg">
+        <strong class="text-xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-emerald-200">Meridian Billing</strong>
+        <nav class="flex gap-4 ml-4">
+          <a href="/" class="text-sm font-semibold px-3 py-1.5 rounded-md transition-all ${active === '/' ? 'bg-white/10 text-white font-bold' : 'text-teal-100 hover:text-white'}">Dashboard</a>
+          <a href="/subscriptions" class="text-sm font-semibold px-3 py-1.5 rounded-md transition-all ${active === '/subscriptions' ? 'bg-white/10 text-white font-bold' : 'text-teal-100 hover:text-white'}">Subscriptions</a>
+          <a href="/subscriptions?status=active" class="text-sm font-semibold px-3 py-1.5 rounded-md transition-all ${active === '/subscriptions?status=active' ? 'bg-white/10 text-white font-bold' : 'text-teal-100 hover:text-white'}">Active</a>
+          <a href="/subscriptions/new" class="text-sm font-semibold px-3 py-1.5 rounded-md transition-all ${active === '/subscriptions/new' ? 'bg-white/10 text-white font-bold' : 'text-teal-100 hover:text-white'}">New subscription</a>
+        </nav>
+        <span class="ml-auto text-sm text-teal-100"><a href="/logout" class="hover:text-white transition-all">Sign out</a></span>
+      </header>
+      <main class="max-w-[920px] w-full mx-auto p-6 flex-grow flex flex-col">
+        <h1 class="text-3xl font-black text-[#115e59] mb-6">${esc(title)}</h1>
+        <div id="server-rendered-body" v-html="bodyContent"></div>
+      </main>
+      <footer class="mt-auto text-center py-6 border-t border-slate-200 bg-white text-xs text-slate-400">
+        &copy; 2026 Meridian Billing. Powered by <strong>Vue 3 Global App Wrapper</strong> and custom style bindings.
+      </footer>
+    </div>
+  </div>
+  <div id="raw-body-content" style="display:none;">${body}</div>
+  <script>
+    const { createApp, ref, onMounted } = Vue;
+    createApp({
+      setup() {
+        const bodyContent = ref('');
+        onMounted(() => {
+          bodyContent.value = document.getElementById('raw-body-content').innerHTML;
+        });
+        return { bodyContent };
+      }
+    }).mount('#vue-app');
+  </script>
+</body>
+</html>`;
 
 app.get("/healthz", (_q, r) => r.type("text").send("ok"));
-app.use((req, res, next) => { if (["/login", "/healthz", "/api/reset"].includes(req.path)) return next(); if (!currentUser(req)) return res.redirect("/login"); next(); });
+app.use((req, res, next) => {
+  res.setHeader("X-Powered-By", "Nuxt");
+  if (["/login", "/healthz", "/api/reset"].includes(req.path)) return next();
+  if (!currentUser(req)) return res.redirect("/login");
+  next();
+});
 app.get("/login", (_q, res) => res.send(`<!doctype html><html><head><meta charset="utf-8"><title>Sign in · Meridian Billing</title><style>${STYLE}</style></head><body><main><div class="card" style="max-width:380px;margin:60px auto"><h1>Sign in</h1><form method="post" action="/login"><label for="email">Email</label><input id="email" name="email" type="email" value="ops@meridianbilling.test"><label for="password">Password</label><input id="password" name="password" type="password" value="ops12345"><p><button type="submit">Sign in</button></p></form></div></main></body></html>`));
 app.post("/login", (req, res) => { const u = USERS[String(req.body.email || "").toLowerCase()]; if (!u || u.password !== req.body.password) return res.status(401).send(`<p class="err">Wrong email or password.</p><a href="/login">Back</a>`); res.cookie(SESSION, b64(String(req.body.email).toLowerCase()), { httpOnly: true }); res.redirect("/"); });
 app.get("/logout", (_q, res) => { res.clearCookie(SESSION); res.redirect("/login"); });
@@ -93,4 +368,9 @@ app.post("/subscriptions/:id/cancel", (req, res) => {
   res.redirect(`/subscriptions/${s.id}`);
 });
 app.post("/api/reset", (req, res) => { if (req.get("X-Reset-Token") !== RESET_TOKEN) return res.status(403).json({ error: "bad token" }); seq = 900; ({ customers, subs } = seed()); persist(); res.json({ ok: true, counts: { customers: customers.length, subscriptions: subs.length } }); });
-app.listen(Number(process.env.PORT || 3000), () => console.log(`meridian-billing on ${process.env.PORT || 3000}; bugs=${[...BUGS].join(",") || "none"}`));
+app.listen(Number(process.env.PORT || 3000), () => {
+  console.log(` Nuxt 3.0.0 with Nitro 2.0.0`);
+  console.log(`  - Local:    http://localhost:${process.env.PORT || 3000}`);
+  console.log(``);
+  console.log(`[Nuxt] meridian-billing listening; active bugs=${[...BUGS].join(",") || "none"}`);
+});
